@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ammara Medical Center</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="loginScreen" class="login-screen">
+  <div class="login-box">
+    <h1>AMMARA MEDICAL CENTER</h1>
+    <p>Clinic Management System</p>
+    <input id="loginPassword" type="password" placeholder="Password" onkeydown="if(event.key==='Enter')login()">
+    <button onclick="login()">Login</button>
+    <small>First password: 1234</small>
+    <p id="loginError" class="error"></p>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+<header>
+  <div><h1>AMMARA MEDICAL CENTER</h1><p>Clinic Management System</p></div>
+  <div class="header-buttons">
+    <button class="secondary" onclick="openSettings()">Settings</button>
+    <button class="danger" onclick="logout()">Logout</button>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" onclick="showTab('dashboard',this)">Dashboard</button>
+  <button class="tab" onclick="showTab('opd',this)">OPD Token</button>
+  <button class="tab" onclick="showTab('procedures',this)">Procedures / Services</button>
+  <button class="tab" onclick="showTab('expenses',this)">Expenses</button>
+  <button class="tab" onclick="showTab('records',this)">Records</button>
+</nav>
+
+<main>
+<section id="dashboard" class="tab-page">
+  <div class="panel">
+    <div class="dashboard-head">
+      <div><h2>Daily Summary</h2><p id="currentShiftText"></p></div>
+      <input id="dashboardDate" type="date" onchange="renderDashboard()">
+    </div>
+    <div class="stats">
+      <div class="stat"><span>OPD Patients</span><b id="dashOpdPatients">0</b></div>
+      <div class="stat"><span>Procedures</span><b id="dashProcedures">0</b></div>
+      <div class="stat"><span>OPD Sale</span><b id="dashOpdSale">Rs. 0</b></div>
+      <div class="stat"><span>Procedure Sale</span><b id="dashProcedureSale">Rs. 0</b></div>
+      <div class="stat"><span>Total Sale</span><b id="dashTotalSale">Rs. 0</b></div>
+      <div class="stat"><span>Total Expense</span><b id="dashExpenses">Rs. 0</b></div>
+      <div class="stat highlight"><span>Net Amount</span><b id="dashNet">Rs. 0</b></div>
+    </div>
+  </div>
+</section>
+
+<section id="opd" class="tab-page hidden">
+  <div class="panel">
+    <div class="section-head"><div><h2>OPD Token System</h2><p id="shiftBadge"></p></div></div>
+    <div class="form-grid">
+      <label>Patient Name<input id="patientName" placeholder="Patient name"></label>
+      <label>Age<input id="patientAge" type="number" min="0" placeholder="Age"></label>
+      <label>Gender<select id="patientGender"><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select></label>
+      <label>Doctor<select id="patientDoctor" onchange="updateSelectedFee()"></select></label>
+      <label>OPD Fee (Rs.)<input id="patientFee" type="number" readonly></label>
+    </div>
+    <button class="save-btn" onclick="savePatient()">Generate Token & Save Patient</button>
+    <div id="tokenResult" class="token-result hidden">
+      <div class="token-title">PATIENT TOKEN</div>
+      <div id="tokenNumber" class="big-token">001</div>
+      <p><b>Doctor:</b> <span id="tokenDoctor"></span> &nbsp; <b>Shift:</b> <span id="tokenShift"></span></p>
+      <p><b>OPD Fee:</b> Rs. <span id="tokenFee"></span></p>
+      <button onclick="printToken()">Print Token</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Doctor Management</h2>
+    <div class="add-row"><input id="doctorName" placeholder="Doctor name"><input id="doctorFee" type="number" min="0" placeholder="OPD fee (Rs.)"><button onclick="addDoctor()">Add Doctor</button></div>
+    <div id="doctorList"></div>
+  </div>
+</section>
+
+<section id="procedures" class="tab-page hidden">
+  <div class="panel">
+    <h2>Procedures / Services — No OPD Token</h2>
+    <p class="muted">BP, Sugar, Injection, Dressing etc. ke liye yahan entry karein. Is section mein OPD token nahi banta.</p>
+    <div class="form-grid">
+      <label>Patient Name<input id="procPatient" placeholder="Patient name"></label>
+      <label>Procedure<select id="procedureSelect" onchange="updateProcedureFee()"></select></label>
+      <label>Amount (Rs.)<input id="procAmount" type="number" min="0"></label>
+      <label>Date<input id="procDate" type="date"></label>
+    </div>
+    <button class="save-btn" onclick="saveProcedure()">Save Procedure / Sale</button>
+  </div>
+  <div class="panel">
+    <h2>Procedure / Service Management</h2>
+    <div class="add-row"><input id="newProcedureName" placeholder="e.g. BP Check"><input id="newProcedureFee" type="number" min="0" placeholder="Default fee"><button onclick="addProcedure()">Add Service</button></div>
+    <div id="procedureList"></div>
+  </div>
+</section>
+
+<section id="expenses" class="tab-page hidden">
+  <div class="panel">
+    <h2>Daily Expenses</h2>
+    <div class="form-grid">
+      <label>Expense Name<input id="expenseName" placeholder="Pani, Chai, Cleaning..."></label>
+      <label>Amount (Rs.)<input id="expenseAmount" type="number" min="0"></label>
+      <label>Date<input id="expenseDate" type="date"></label>
+    </div>
+    <button class="save-btn" onclick="saveExpense()">Save Expense</button>
+  </div>
+  <div class="panel">
+    <h2>Expenses</h2>
+    <div class="table-wrap"><table><thead><tr><th>Date</th><th>Expense</th><th>Amount</th><th>Action</th></tr></thead><tbody id="expensesBody"></tbody></table></div>
+  </div>
+</section>
+
+<section id="records" class="tab-page hidden">
+  <div class="panel">
+    <div class="records-head">
+      <h2>Records</h2>
+      <div><input id="recordDate" type="date" onchange="renderRecords()"><input id="searchInput" placeholder="Search..." oninput="renderRecords()"><button class="secondary" onclick="exportCSV()">Export CSV</button></div>
+    </div>
+    <div class="table-wrap"><table><thead><tr><th>Type</th><th>Token</th><th>Name</th><th>Doctor/Procedure</th><th>Shift</th><th>Amount</th><th>Date</th><th>Time</th><th>Action</th></tr></thead><tbody id="recordsBody"></tbody></table></div>
+  </div>
+</section>
+</main>
+</div>
+
+<div id="settingsModal" class="modal hidden">
+<div class="modal-box">
+<button class="close" onclick="closeSettings()">×</button>
+<h2>Settings</h2>
+<h3>Shift Times</h3>
+<div class="two-col">
+<label>Morning Start<input id="morningStart" type="time"></label>
+<label>Morning End<input id="morningEnd" type="time"></label>
+<label>Evening Start<input id="eveningStart" type="time"></label>
+<label>Evening End<input id="eveningEnd" type="time"></label>
+</div>
+<button onclick="saveShiftSettings()">Save Shift Times</button>
+<p class="muted">Current time ke mutabiq shift automatically select hogi.</p>
+<hr>
+<h3>Change Password</h3>
+<input id="oldPassword" type="password" placeholder="Current password">
+<input id="newPassword" type="password" placeholder="New password">
+<button onclick="changePassword()">Change Password</button>
+<p id="settingsMessage"></p>
+</div>
+</div>
+
+<div id="printReceipt" class="print-receipt">
+  <div class="receipt-clinic">AMMARA<br>MEDICAL CENTER</div>
+  <div class="receipt-line">--------------------------------</div>
+  <div class="receipt-token-label">PATIENT TOKEN</div>
+  <div id="printToken" class="receipt-token">001</div>
+  <div class="receipt-line">--------------------------------</div>
+  <div class="receipt-row"><span>Patient:</span><b id="printPatient"></b></div>
+  <div class="receipt-row"><span>Age:</span><b id="printAge"></b></div>
+  <div class="receipt-row"><span>Gender:</span><b id="printGender"></b></div>
+  <div class="receipt-row"><span>Doctor:</span><b id="printDoctor"></b></div>
+  <div class="receipt-row"><span>Shift:</span><b id="printShift"></b></div>
+  <div class="receipt-row"><span>Date:</span><b id="printDate"></b></div>
+  <div class="receipt-row"><span>Time:</span><b id="printTime"></b></div>
+  <div class="receipt-line">--------------------------------</div>
+  <div class="receipt-fee"><span>OPD FEE</span><b>Rs. <span id="printFee"></span></b></div>
+  <div class="receipt-line">--------------------------------</div>
+  <div class="receipt-thanks">THANK YOU</div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>
