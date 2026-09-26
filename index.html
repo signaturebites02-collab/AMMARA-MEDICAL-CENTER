@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ammara Medical Center</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="loginScreen" class="login-screen">
+  <div class="login-box">
+    <h1>AMMARA MEDICAL CENTER</h1>
+    <p>Clinic Management System</p>
+    <input id="loginPassword" type="password" placeholder="Password" onkeydown="if(event.key==='Enter')login()">
+    <button onclick="login()">Login</button>
+    <small>First password: 1234</small>
+    <p id="loginError" class="error"></p>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+<header>
+  <div><h1>AMMARA MEDICAL CENTER</h1><p>Clinic Management System</p></div>
+  <div class="header-buttons">
+    <button class="secondary" onclick="openSettings()">Settings</button>
+    <button class="danger" onclick="logout()">Logout</button>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" onclick="showTab('dashboard',this)">Dashboard</button>
+  <button class="tab" onclick="showTab('opd',this)">OPD Token</button>
+  <button class="tab" onclick="showTab('procedures',this)">Procedures / Services</button>
+  <button class="tab" onclick="showTab('lab',this)">Lab / Tests</button>
+  <button class="tab" onclick="showTab('expenses',this)">Expenses</button>
+  <button class="tab" onclick="showTab('shiftClosing',this)">Shift Closing</button>
+  <button class="tab" onclick="showTab('records',this)">Records</button>
+</nav>
+
+<main>
+<section id="dashboard" class="tab-page">
+  <div class="panel">
+    <div class="dashboard-head">
+      <div><h2>Daily Summary</h2><p id="currentShiftText"></p></div>
+      <input id="dashboardDate" type="date" onchange="renderDashboard()">
+    </div>
+    <div class="stats">
+      <div class="stat"><span>OPD Patients</span><b id="dashOpdPatients">0</b></div>
+      <div class="stat"><span>Procedures</span><b id="dashProcedures">0</b></div>
+      <div class="stat"><span>Lab Tests</span><b id="dashLabs">0</b></div>
+      <div class="stat"><span>Procedure Sale</span><b id="dashProcedureSale">Rs. 0</b></div>
+      <div class="stat"><span>Lab Sale</span><b id="dashLabSale">Rs. 0</b></div>
+      <div class="stat"><span>Total Sale</span><b id="dashTotalSale">Rs. 0</b></div>
+      <div class="stat"><span>Paid / Cash Received</span><b id="dashPaid">Rs. 0</b></div>
+      <div class="stat"><span>Credit / Remaining</span><b id="dashCredit">Rs. 0</b></div>
+      <div class="stat"><span>Total Expense</span><b id="dashExpenses">Rs. 0</b></div>
+      <div class="stat highlight"><span>Net Cash</span><b id="dashNet">Rs. 0</b></div>
+    </div>
+  </div>
+</section>
+
+<section id="opd" class="tab-page hidden">
+  <div class="panel">
+    <div class="section-head"><div><h2>OPD Token System</h2><p id="shiftBadge"></p></div></div>
+    <div class="form-grid">
+      <label>Patient Name<input id="patientName" placeholder="Patient name"></label>
+      <label>Age<input id="patientAge" type="number" min="0" placeholder="Age"></label>
+      <label>Gender<select id="patientGender"><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select></label>
+      <label>Doctor<select id="patientDoctor"></select></label>
+      <label>Shift<select id="patientShift" onchange="updateShiftMode()"><option value="AUTO">Auto (Current Time)</option><option value="Morning">Morning</option><option value="Evening">Evening</option><option value="Night">Night</option></select></label>
+    </div>
+    <button class="save-btn" onclick="savePatient()">Generate Token & Save Patient</button>
+    <div id="tokenResult" class="token-result hidden">
+      <div class="token-title">PATIENT TOKEN</div>
+      <div id="tokenNumber" class="big-token">001</div>
+      <p><b>Doctor:</b> <span id="tokenDoctor"></span> &nbsp; <b>Shift:</b> <span id="tokenShift"></span></p>
+      <p class="muted auto-print-note">Token save ke baad print window automatically open hoti hai.</p><button class="secondary" type="button" onclick="printTokenReceipt()">🖨️ Print Token</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Doctor Management</h2>
+    <div class="add-row single-add"><input id="doctorName" placeholder="Doctor name"><button onclick="addDoctor()">Add Doctor</button></div>
+    <div id="doctorList"></div>
+  </div>
+</section>
+
+<section id="procedures" class="tab-page hidden">
+  <div class="panel">
+    <h2>Procedures / Services — No OPD Token</h2>
+    <p class="muted">BP, Sugar, Injection, Dressing etc. ke liye yahan entry karein. Is section mein OPD token nahi banta.</p>
+    <div class="form-grid">
+      <label>Patient Name<input id="procPatient" placeholder="Patient name"></label>
+      <label>Procedure<select id="procedureSelect" onchange="updateProcedureFee()"></select></label>
+      <label>Amount (Rs.)<input id="procAmount" type="number" min="0" oninput="updateProcedureCredit()"></label>
+      <label>Paid Amount (Rs.)<input id="procPaid" type="number" min="0" autocomplete="off" oninput="updateProcedureCredit()"></label>
+      <label>Credit / Remaining (Rs.)<input id="procCredit" type="number" readonly></label>
+      <label>Shift<select id="procShift"><option value="AUTO">Auto (Current Time)</option><option value="Morning">Morning</option><option value="Evening">Evening</option><option value="Night">Night</option></select></label>
+      <label>Date<input id="procDate" type="date"></label>
+    </div>
+    <button class="save-btn" onclick="saveProcedure()">Save Procedure / Sale</button>
+  </div>
+  <div class="panel">
+    <h2>Procedure / Service Management</h2>
+    <div class="add-row"><input id="newProcedureName" placeholder="e.g. BP Check"><input id="newProcedureFee" type="number" min="0" placeholder="Default fee"><button onclick="addProcedure()">Add Service</button></div>
+    <div id="procedureList"></div>
+  </div>
+</section>
+
+<section id="lab" class="tab-page hidden">
+  <div class="panel">
+    <h2>Lab / Tests — No OPD Token</h2>
+    <p class="muted">Ek patient ke liye ek hi dafa mein multiple tests select karein — CBC + LFT + MP etc. Total fee automatically add hogi.</p>
+    <div class="form-grid">
+      <label>Patient Name<input id="labPatient" placeholder="Patient name"></label>
+      <div class="test-picker-field"><span class="field-label">Select Tests</span><div id="testSelect" class="test-check-list"></div></div>
+      <label>Total Test Amount (Rs.)<input id="labAmount" type="number" min="0" readonly></label>
+      <label>Paid Amount (Rs.)<input id="labPaid" type="number" min="0" autocomplete="off" oninput="updateLabCredit()"></label>
+      <label>Credit / Remaining (Rs.)<input id="labCredit" type="number" readonly></label>
+      <label>Shift<select id="labShift"><option value="AUTO">Auto (Current Time)</option><option value="Morning">Morning</option><option value="Evening">Evening</option><option value="Night">Night</option></select></label>
+      <label>Date<input id="labDate" type="date"></label>
+    </div>
+    <button class="save-btn" onclick="saveLab()">Save Lab / Test Sale</button>
+    <div id="labResult" class="token-result hidden"><div class="token-title">LAB PAYMENT SLIP</div><p><b>Patient:</b> <span id="labResultPatient"></span></p><p><b>Tests:</b> <span id="labResultTests"></span></p><p><b>Total:</b> Rs. <span id="labResultTotal"></span> &nbsp; <b>Paid:</b> Rs. <span id="labResultPaid"></span> &nbsp; <b>Credit:</b> Rs. <span id="labResultCredit"></span></p><button class="secondary" type="button" onclick="printLastLabSlip()">🧾 Print Payment Slip</button></div>
+  </div>
+  <div class="panel">
+    <h2>Test Management</h2>
+    <div class="add-row"><input id="newTestName" placeholder="e.g. CBC"><input id="newTestFee" type="number" min="0" placeholder="Test fee"><button type="button" onclick="addTest()">Add Test</button></div>
+    <div id="testList"></div>
+  </div>
+</section>
+
+<section id="expenses" class="tab-page hidden">
+  <div class="panel">
+    <h2>Daily Expenses</h2>
+    <div class="form-grid">
+      <label>Expense Name<input id="expenseName" placeholder="Pani, Chai, Cleaning..."></label>
+      <label>Amount (Rs.)<input id="expenseAmount" type="number" min="0"></label>
+      <label>Shift<select id="expenseShift"><option value="AUTO">Auto (Current Time)</option><option value="Morning">Morning</option><option value="Evening">Evening</option><option value="Night">Night</option></select></label>
+      <label>Date<input id="expenseDate" type="date"></label>
+    </div>
+    <button class="save-btn" onclick="saveExpense()">Save Expense</button>
+  </div>
+  <div class="panel">
+    <h2>Expenses</h2>
+    <div class="table-wrap"><table><thead><tr><th>Date</th><th>Expense</th><th>Amount</th><th>Shift</th><th>Action</th></tr></thead><tbody id="expensesBody"></tbody></table></div>
+  </div>
+</section>
+
+<section id="shiftClosing" class="tab-page hidden">
+  <div class="panel">
+    <div class="dashboard-head"><div><h2>Shift Closing</h2><p class="muted">Morning, Evening aur Night ki closing alag-alag save hogi.</p></div></div>
+    <div class="form-grid">
+      <label>From Date<input id="closingFrom" type="date" onchange="renderClosingSummary()"></label>
+      <label>To Date<input id="closingTo" type="date" onchange="renderClosingSummary()"></label>
+      <label>Shift<select id="closingShift" onchange="renderClosingSummary()"><option>Morning</option><option>Evening</option><option>Night</option></select></label>
+    </div>
+    <p class="muted">Kisi bhi date ya date range ki selected shift ka total data yahan dekhein. <b>Close This Shift</b> sirf ek din ki selected shift ko close karega.</p>
+    <div class="stats closing-stats">
+      <div class="stat"><span>OPD Patients</span><b id="closeOpd">0</b></div>
+      <div class="stat"><span>Procedures</span><b id="closeServices">0</b></div>
+      <div class="stat"><span>Lab Tests</span><b id="closeLabs">0</b></div>
+      <div class="stat"><span>Total Sale</span><b id="closeTotal">Rs. 0</b></div>
+      <div class="stat"><span>Paid / Cash Received</span><b id="closePaid">Rs. 0</b></div>
+      <div class="stat"><span>Credit / Remaining</span><b id="closeCredit">Rs. 0</b></div>
+      <div class="stat"><span>Expenses</span><b id="closeExpense">Rs. 0</b></div>
+      <div class="stat highlight"><span>Net Cash</span><b id="closeCash">Rs. 0</b></div>
+    </div>
+    <p>Status: <span id="closeStatus" class="badge">OPEN</span></p>
+    <button id="closeBtn" class="save-btn" onclick="closeShift()">Close This Shift</button>
+  </div>
+  <div class="panel">
+    <h2>Closed Shift History</h2>
+    <div class="table-wrap"><table><thead><tr><th>Date</th><th>Shift</th><th>Total Sale</th><th>Paid</th><th>Credit</th><th>Expense</th><th>Net Cash</th><th>Closed At</th></tr></thead><tbody id="closingHistoryBody"></tbody></table></div>
+  </div>
+</section>
+
+<section id="records" class="tab-page hidden">
+  <div class="panel">
+    <div class="records-head">
+      <h2>Records</h2>
+      <div><label>From <input id="recordFrom" type="date" onchange="renderRecords()"></label> <label>To <input id="recordTo" type="date" onchange="renderRecords()"></label> <input id="searchInput" placeholder="Search..." oninput="renderRecords()"></div>
+    </div>
+    <div class="record-tabs">
+      <button class="record-tab active" onclick="showRecordType('tokens',this)">🧾 Token Records</button>
+      <button class="record-tab" onclick="showRecordType('procedures',this)">🩺 Procedure / Service Records</button>
+      <button class="record-tab" onclick="showRecordType('labs',this)">🧪 Lab Records</button>
+      <button class="record-tab" onclick="showRecordType('expenses',this)">💸 Expense Records</button>
+    </div>
+    <div id="recordTokens" class="record-panel">
+      <div class="record-title-row"><h3>OPD Token Records</h3><button class="secondary" onclick="exportRecordType('tokens')">Export Tokens CSV</button></div>
+      <div class="table-wrap"><table><thead><tr><th>Token</th><th>Patient</th><th>Doctor</th><th>Shift</th><th>Date</th><th>Time / Action</th></tr></thead><tbody id="tokenRecordsBody"></tbody></table></div>
+    </div>
+    <div id="recordProcedures" class="record-panel hidden">
+      <div class="record-title-row"><h3>Procedure / Service Records</h3><button class="secondary" onclick="exportRecordType('procedures')">Export Procedures CSV</button></div>
+      <div class="table-wrap"><table><thead><tr><th>Patient</th><th>Procedure</th><th>Shift</th><th>Total</th><th>Paid</th><th>Credit</th><th>Date</th><th>Time / Action</th></tr></thead><tbody id="procedureRecordsBody"></tbody></table></div>
+    </div>
+    <div id="recordLabs" class="record-panel hidden">
+      <div class="record-title-row"><h3>Lab / Test Records</h3><button class="secondary" onclick="exportRecordType('labs')">Export Labs CSV</button></div>
+      <div class="table-wrap"><table><thead><tr><th>Patient</th><th>Test</th><th>Shift</th><th>Total</th><th>Paid</th><th>Credit</th><th>Date</th><th>Time / Action</th></tr></thead><tbody id="labRecordsBody"></tbody></table></div>
+    </div>
+    <div id="recordExpenses" class="record-panel hidden">
+      <div class="record-title-row"><h3>Expense Records</h3><button class="secondary" onclick="exportRecordType('expenses')">Export Expenses CSV</button></div>
+      <div class="table-wrap"><table><thead><tr><th>Expense</th><th>Shift</th><th>Amount</th><th>Date</th><th>Time / Action</th></tr></thead><tbody id="expenseRecordsBody"></tbody></table></div>
+    </div>
+  </div>
+</section>
+</main>
+</div>
+
+<div id="settingsModal" class="modal hidden">
+<div class="modal-box">
+<button class="close" onclick="closeSettings()">×</button>
+<h2>Settings</h2>
+<h3>Shift Times</h3>
+<label class="setting-toggle">Manual Shift Selection <input id="manualShiftMode" type="checkbox" onchange="toggleManualShiftMode()"></label>
+<div class="two-col">
+<label>Morning Start<input id="morningStart" type="time"></label>
+<label>Morning End<input id="morningEnd" type="time"></label>
+<label>Evening Start<input id="eveningStart" type="time"></label>
+<label>Evening End<input id="eveningEnd" type="time"></label>
+<label>Night Start<input id="nightStart" type="time"></label>
+<label>Night End<input id="nightEnd" type="time"></label>
+</div>
+<button onclick="saveShiftSettings()">Save Shift Times</button>
+<p class="muted">Manual ON: OPD / Service / Lab / Expense mein shift khud select karein. Manual OFF: current time se shift auto select hogi.</p>
+<hr>
+<h3>Change Password</h3>
+<input id="oldPassword" type="password" placeholder="Current password">
+<input id="newPassword" type="password" placeholder="New password">
+<input id="confirmPassword" type="password" placeholder="Confirm new password">
+<button onclick="changePassword()">Change Password</button>
+<p id="settingsMessage"></p>
+</div>
+</div>
+
+<div id="printReceipt" class="print-receipt">
+  <img src="logo.png" class="receipt-logo" alt="Ammara Medical Center">
+  <div class="receipt-line">--------------------------------</div>
+  <div class="receipt-token-label">PATIENT TOKEN</div>
+  <div id="printToken" class="receipt-token">001</div>
+  <div class="receipt-line">--------------------------------</div>
+  <div class="receipt-row"><span>Patient:</span><b id="printPatient"></b></div>
+  <div class="receipt-row"><span>Age:</span><b id="printAge"></b></div>
+  <div class="receipt-row"><span>Gender:</span><b id="printGender"></b></div>
+  <div class="receipt-row"><span>Doctor:</span><b id="printDoctor"></b></div>
+  <div class="receipt-row"><span>Shift:</span><b id="printShift"></b></div>
+  <div class="receipt-row"><span>Date:</span><b id="printDate"></b></div>
+  <div class="receipt-row"><span>Time:</span><b id="printTime"></b></div>
+  <div class="receipt-line">--------------------------------</div>
+  <div class="receipt-thanks">THANK YOU<div class="receipt-visit">FOR VISITING AMMARA MEDICAL CENTER</div><div class="receipt-ecg">------ 〰︎ ------</div></div>
+</div>
+
+<div id="labPaymentReceipt" class="lab-payment-receipt">
+  <img src="logo.png" class="receipt-logo" alt="Ammara Medical Center">
+  <div class="receipt-line">--------------------------------</div>
+  <div class="receipt-token-label">LAB PAYMENT SLIP</div>
+  <div class="receipt-line">--------------------------------</div>
+  <div class="receipt-row"><span>Patient:</span><b id="labPrintPatient"></b></div>
+  <div class="receipt-row"><span>Tests:</span><b id="labPrintTests"></b></div>
+  <div class="receipt-row"><span>Shift:</span><b id="labPrintShift"></b></div>
+  <div class="receipt-row"><span>Date:</span><b id="labPrintDate"></b></div>
+  <div class="receipt-row"><span>Time:</span><b id="labPrintTime"></b></div>
+  <div class="receipt-line">--------------------------------</div>
+  <div class="receipt-fee"><span>TOTAL</span><span>Rs. <b id="labPrintTotal"></b></span></div>
+  <div class="receipt-fee"><span>PAID</span><span>Rs. <b id="labPrintPaid"></b></span></div>
+  <div class="receipt-fee"><span>CREDIT</span><span>Rs. <b id="labPrintCredit"></b></span></div>
+  <div class="receipt-thanks">THANK YOU<div class="receipt-visit">FOR VISITING AMMARA MEDICAL CENTER</div></div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>
